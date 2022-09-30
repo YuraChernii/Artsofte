@@ -1,0 +1,71 @@
+# ASP.NET Core (.NET Framework)
+# Build and test ASP.NET Core projects targeting the full .NET Framework.
+# Add steps that publish symbols, save build artifacts, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
+
+trigger:
+- main
+
+pool:
+  vmImage: 'windows-2022'
+
+variables:
+  solution: '**/*.sln'
+  Major: '1'
+  Minor: '0'
+  Patch: $[counter(format('{0}.{1}', variables['Major'], variables['Minor']), 0)]
+  FullBuildNumber: $(Major).$(Minor).$(Patch)
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Release'
+  NUGET_PACKAGES: $(Pipeline.Workspace)/.nuget/packages
+  NUGET.PLUGIN.HANDSHAKE.TIMEOUT.IN.SECONDS: 20
+  NUGET.PLUGIN.REQUEST.TIMEOUT.IN.SECONDS: 20
+
+steps:
+- task: Cache@2
+  inputs:
+    key: 'nuget | "$(Agent.OS)"'
+    restoreKeys: |
+       nuget | "$(Agent.OS)"
+       nuget
+    path: $(NUGET_PACKAGES)
+  displayName: Cache NuGet packages
+
+- task: NuGetAuthenticate@0
+
+- task: DotNetCoreCLI@2
+  displayName: 'Build'
+  inputs:
+    command: build
+    projects: '**/*.csproj'
+    arguments: '-c $(BuildConfiguration)'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Test'
+  inputs:
+    command: test
+    projects: '**/*.Tests.csproj'
+    arguments: '-c $(BuildConfiguration) --no-build --filter "TestCategory!=Integration"'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Publish'
+  inputs:
+    command: publish
+    projects: 'Core.Portal.Api/Core.Portal.Api.csproj'
+    publishWebProjects: False
+    arguments: '-c $(BuildConfiguration) -o $(Build.ArtifactStagingDirectory) --no-build -p:version=$(FullBuildNumber) -p:ErrorOnDuplicatePublishOutputFiles=false'
+    zipAfterPublish: True
+    modifyOutputPath: True
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Upload Artifacts'
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'Artifacts'
+
+- task: PublishSymbols@2
+  displayName: 'Publish Symbols'
+  inputs:
+    searchPattern: '**/bin/**/*.pdb' 
+    symbolServerType: 'teamServices'
+    detailedLog: true # Optional    
