@@ -10,6 +10,7 @@ namespace Core.Portal.Application.DTOs.Employe
     public class GetSaleDTO
     {
         public int ItemId { get; set; }
+        public string ItemName { get; set; }
         public DateTime CreatedDt { get; set; }
         public DateTime FinishedDt { get; set; }
         public decimal Price { get; set; }

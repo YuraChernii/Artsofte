@@ -30,6 +30,7 @@ namespace Core.Portal.Infrastructure.SqlServerDatabase.Entities
             {
                 Id = saleTable.Id,
                 ItemId = saleTable.ItemId,
+                Item = saleTable.Item.AsEntity(),
                 CreatedDt = saleTable.CreatedDt,
                 FinishedDt = saleTable.FinishedDt,
                 Price = saleTable.Price,

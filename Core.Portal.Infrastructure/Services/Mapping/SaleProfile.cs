@@ -9,7 +9,8 @@ namespace Core.Portal.Infrastructure.Services.Mapping
     {
         public SaleProfile()
         {
-            CreateMap<Sale, GetSaleDTO>();
+            CreateMap<Sale, GetSaleDTO>()
+                .ForMember(dest => dest.ItemName, opt => opt.MapFrom(_ => _.Item.Name));
         }
     }
 }
